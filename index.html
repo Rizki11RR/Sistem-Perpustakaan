@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baitul Hikmah - MI Islamiyah Kalilandak</title>
+    <meta name="description" content="Sistem Informasi Perpustakaan MI Islamiyah Kalilandak">
+    <meta name="theme-color" content="#059669">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Tailwind CSS Offline Fallback -->
+    <link rel="stylesheet" href="assets/css/tailwind.offline.css">
+    
+    <!-- Tailwind CSS via CDN (online mode - lebih lengkap) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'islami': '#059669',
+                        'islami-dark': '#047857',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .animate-slideIn {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .animate-slideOut {
+            animation: slideOut 0.3s ease-in;
+        }
+        
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-emerald-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-4xl">
+                    📚
+                </div>
+                <h1 class="text-3xl font-bold text-emerald-800">Baitul Hikmah</h1>
+                <p class="text-gray-600 mt-2">MI Islamiyah Kalilandak</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="loginUsername" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        placeholder="Masukkan username">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        placeholder="Masukkan password">
+                </div>
+                
+                <button type="submit" 
+                    class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition">
+                    Masuk
+                </button>
+                
+                <p class="text-xs text-gray-500 text-center mt-4">
+                    Login default: admin / admin123<br>
+                    <span class="text-amber-600">Harap ganti password setelah login pertama</span>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <!-- Header -->
+        <header class="bg-white shadow-md sticky top-0 z-40">
+            <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <button id="sidebarToggle" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white text-xl">
+                            📚
+                        </div>
+                        <div class="hidden sm:block">
+                            <h1 class="font-bold text-emerald-800 text-lg">Baitul Hikmah</h1>
+                            <p class="text-xs text-gray-600">MI Islamiyah Kalilandak</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div id="connectionStatus" class="text-sm"></div>
+                    
+                    <div class="relative">
+                        <span id="unsyncedCount" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"></span>
+                        <span class="text-gray-600">👤</span>
+                    </div>
+                    
+                    <div class="hidden md:block">
+                        <p class="text-sm font-medium" id="headerUserName"></p>
+                        <p class="text-xs text-gray-600" id="headerUserRole"></p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Overlay for mobile sidebar -->
+        <div id="overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
+
+        <div class="flex">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="fixed md:sticky top-0 left-0 h-screen w-64 bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40 overflow-y-auto">
+                <nav class="p-4 space-y-1">
+                    <a href="#" data-page="dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-50 transition">
+                        <span class="text-xl">📊</span>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                    
+                    <a href="#" data-page="buku" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-50 transition">
+                        <span class="text-xl">📚</span>
+                        <span class="font-medium">Katalog Buku</span>
+                    </a>
+                    
+                    <a href="#" data-page="anggota" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-50 transition">
+                        <span class="text-xl">👥</span>
+                        <span class="font-medium">Anggota</span>
+                    </a>
+                    
+                    <a href="#" data-page="petugas" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-50 transition">
+                        <span class="text-xl">👨‍💼</span>
+                        <span class="font-medium">Petugas</span>
+                    </a>
+                    
+                    <a href="#" data-page="sirkulasi" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-50 transition">
+                        <span class="text-xl">🔄</span>
+                        <span class="font-medium">Sirkulasi</span>
+                    </a>
+                    
+                    <a href="#" data-page="backup" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-50 transition">
+                        <span class="text-xl">💾</span>
+                        <span class="font-medium">Sinkronisasi & Backup</span>
+                    </a>
+                    
+                    <a href="#" data-page="pengaturan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-50 transition">
+                        <span class="text-xl">⚙️</span>
+                        <span class="font-medium">Pengaturan</span>
+                    </a>
+                    
+                    <hr class="my-4">
+                    
+                    <button onclick="UI.logout()" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition">
+                        <span class="text-xl">🚪</span>
+                        <span class="font-medium">Keluar</span>
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-6 min-h-screen">
+                <!-- Dashboard Page -->
+                <div data-page-content="dashboard" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-600">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-600 text-sm mb-1">Total Judul Buku</p>
+                                    <h3 id="statTotalJudul" class="text-3xl font-bold text-emerald-600">0</h3>
+                                </div>
+                                <span class="text-4xl">📚</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-600 text-sm mb-1">Total Eksemplar</p>
+                                    <h3 id="statTotalEksemplar" class="text-3xl font-bold text-blue-600">0</h3>
+                                </div>
+                                <span class="text-4xl">📖</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-600">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-600 text-sm mb-1">Total Anggota</p>
+                                    <h3 id="statTotalAnggota" class="text-3xl font-bold text-purple-600">0</h3>
+                                </div>
+                                <span class="text-4xl">👥</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-600">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-600 text-sm mb-1">Peminjaman Aktif</p>
+                                    <h3 id="statPeminjamanAktif" class="text-3xl font-bold text-amber-600">0</h3>
+                                </div>
+                                <span class="text-4xl">🔄</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-bold mb-4">Peminjaman Terbaru</h3>
+                            <div id="peminjamanTerbaru" class="space-y-3"></div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-bold mb-4">Buku Terpopuler</h3>
+                            <div id="bukuTerpopuler" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buku Page -->
+                <div data-page-content="buku" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Katalog Buku</h2>
+                    <div id="bukuPage"></div>
+                </div>
+
+                <!-- Anggota Page -->
+                <div data-page-content="anggota" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Data Anggota</h2>
+                    <div id="anggotaPage"></div>
+                </div>
+
+                <!-- Petugas Page -->
+                <div data-page-content="petugas" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Data Petugas</h2>
+                    <div id="petugasPage"></div>
+                </div>
+
+                <!-- Sirkulasi Page -->
+                <div data-page-content="sirkulasi" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Sirkulasi Peminjaman</h2>
+                    <div id="sirkulasiPage"></div>
+                </div>
+
+                <!-- Backup Page -->
+                <div data-page-content="backup" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Sinkronisasi & Backup</h2>
+                    <div id="backupPage"></div>
+                </div>
+
+                <!-- Pengaturan Page -->
+                <div data-page-content="pengaturan" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Pengaturan</h2>
+                    <div id="pengaturanPage"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/vendor/jsbarcode.min.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/sync.js"></script>
+    <script src="assets/js/buku.js"></script>
+    <script src="assets/js/anggota.js"></script>
+    <script src="assets/js/sirkulasi.js"></script>
+    <script src="assets/js/backup.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
