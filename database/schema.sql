@@ -1,11 +1,8 @@
 -- Database Schema untuk Perpustakaan Baitul Hikmah
 -- MySQL/MariaDB
-
-CREATE DATABASE IF NOT EXISTS perpustakaan_baitul_hikmah 
-  CHARACTER SET utf8mb4 
-  COLLATE utf8mb4_unicode_ci;
-
-USE perpustakaan_baitul_hikmah;
+-- 
+-- CATATAN: Database harus dibuat via cPanel terlebih dahulu
+-- Hapus baris CREATE DATABASE & USE jika import via phpMyAdmin
 
 -- Tabel Buku
 CREATE TABLE IF NOT EXISTS buku (
