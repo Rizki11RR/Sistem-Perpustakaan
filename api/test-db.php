@@ -4,7 +4,11 @@
 
 header('Content-Type: application/json');
 
-require_once 'config.php';
+// HARDCODE - bypass config.php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'ciptaver_perpustakaan_kalilandak');
+define('DB_USER', 'ciptaver_perpus');
+define('DB_PASS', 'kalilandak11');
 
 try {
     $pdo = new PDO(
