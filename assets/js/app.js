@@ -83,6 +83,20 @@ function setupLogin() {
     try {
       UI.showLoading('Memverifikasi...');
       
+      // Try pull sync first (if API configured)
+      const apiUrl = await getSetting('api_url');
+      const apiToken = await getSetting('api_token');
+      
+      if (apiUrl && apiToken && navigator.onLine) {
+        UI.showLoading('Sinkronisasi data...');
+        const pullResult = await SyncManager.pullSync();
+        if (pullResult.success && pullResult.updated > 0) {
+          console.log(`Pulled ${pullResult.updated} records from server`);
+        }
+      }
+      
+      UI.showLoading('Memverifikasi...');
+      
       // Get all petugas
       const allPetugas = await getAllRecords('petugas');
       const petugas = allPetugas.find(p => p.username === username);

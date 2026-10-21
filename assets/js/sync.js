@@ -124,6 +124,104 @@ window.SyncModule = {
 
   async getSyncLog() {
     return await getAllRecords('sync_log');
+  },
+
+  // Pull sync - download data from server
+  async pullSync() {
+    const apiUrl = await getSetting('api_url');
+    const apiToken = await getSetting('api_token');
+
+    if (!apiUrl || !apiToken) {
+      return { success: false, message: 'API tidak dikonfigurasi' };
+    }
+
+    if (!navigator.onLine) {
+      return { success: false, message: 'Tidak ada koneksi internet' };
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/pull.php`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || 'Pull sync failed');
+      }
+
+      // Merge data from server
+      let updated = 0;
+
+      // Merge petugas (for login sync across devices)
+      if (result.data.petugas && result.data.petugas.length > 0) {
+        for (const petugas of result.data.petugas) {
+          const existing = await getRecord('petugas', petugas.id);
+          if (!existing) {
+            await addRecord('petugas', { ...petugas, synced: 1 });
+            updated++;
+          } else if (new Date(petugas.updated_at) > new Date(existing.updated_at)) {
+            await updateRecord('petugas', petugas.id, { ...petugas, synced: 1 });
+            updated++;
+          }
+        }
+      }
+
+      // Merge buku
+      if (result.data.buku && result.data.buku.length > 0) {
+        for (const buku of result.data.buku) {
+          const existing = await getRecord('buku', buku.id);
+          if (!existing) {
+            await addRecord('buku', { ...buku, synced: 1 });
+            updated++;
+          } else if (new Date(buku.updated_at) > new Date(existing.updated_at)) {
+            await updateRecord('buku', buku.id, { ...buku, synced: 1 });
+            updated++;
+          }
+        }
+      }
+
+      // Merge anggota
+      if (result.data.anggota && result.data.anggota.length > 0) {
+        for (const anggota of result.data.anggota) {
+          const existing = await getRecord('anggota', anggota.id);
+          if (!existing) {
+            await addRecord('anggota', { ...anggota, synced: 1 });
+            updated++;
+          } else if (new Date(anggota.updated_at) > new Date(existing.updated_at)) {
+            await updateRecord('anggota', anggota.id, { ...anggota, synced: 1 });
+            updated++;
+          }
+        }
+      }
+
+      // Merge peminjaman
+      if (result.data.peminjaman && result.data.peminjaman.length > 0) {
+        for (const peminjaman of result.data.peminjaman) {
+          const existing = await getRecord('peminjaman', peminjaman.id);
+          if (!existing) {
+            await addRecord('peminjaman', { ...peminjaman, synced: 1 });
+            updated++;
+          } else if (new Date(peminjaman.updated_at) > new Date(existing.updated_at)) {
+            await updateRecord('peminjaman', peminjaman.id, { ...peminjaman, synced: 1 });
+            updated++;
+          }
+        }
+      }
+
+      return { success: true, updated };
+
+    } catch (error) {
+      console.error('Pull sync error:', error);
+      return { success: false, message: error.message };
+    }
   }
 };
 
